@@ -7,4 +7,16 @@ DATTY AI : 3 modèles :
 3/Analyse -> Insights 
 
 
--> Dashboard Engine
+-> Dashboard Engine 
+
+
+
+
+Sur le repo github : 
+
+- Le Saas
+- L'IA dévellopé
+
+Sur le repo huggingFace : 
+
+    - Les entrainements du modèles
