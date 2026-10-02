@@ -6,7 +6,7 @@ import unittest  # Organise les tests automatiques.
 from pathlib import Path  # Manipule les chemins temporaires.
 from llm_fr.books import body, chunks  # Teste le nettoyage des éditions et leur découpage.
 from llm_fr.corpus import records, split_corpus  # Vérifie la séparation par ouvrage.
-from llm_fr.runtime import training_lock, stop_reason  # Vérifie les protections des sessions longues.
+from llm_fr.runtime import resources, training_lock, stop_reason  # Vérifie les protections des sessions longues.
 
 
 class BooksResourcesTests(unittest.TestCase):  # Regroupe les nouvelles propriétés à protéger.
@@ -34,6 +34,14 @@ class BooksResourcesTests(unittest.TestCase):  # Regroupe les nouvelles proprié
             val = {r["split_group"] for r in records(root / "prepared/val.jsonl")}  # Identifie les ouvrages réservés.
             self.assertFalse(train & val)  # Aucun livre ne doit être partagé.
             self.assertEqual(len(train | val), 80)  # Aucun ouvrage ne doit être perdu.
+
+    def test_resources_snapshot(self):  # Vérifie que la mesure portable renvoie des valeurs exploitables.
+        with tempfile.TemporaryDirectory() as folder:  # Isole le dossier de sortie mesuré.
+            usage = resources(folder)  # Exécute la vraie lecture système.
+            self.assertEqual(set(usage), {"rss_mb", "available_mb", "disk_free_mb"})  # Exige les trois champs attendus.
+            self.assertGreater(usage["rss_mb"], 0)  # La RSS courante doit être positive.
+            self.assertGreater(usage["available_mb"], 0)  # La mémoire disponible doit être estimable.
+            self.assertGreater(usage["disk_free_mb"], 0)  # L'espace disque libre doit être mesurable.
 
     def test_lock_and_resource_stop(self):  # Vérifie le verrou exclusif et les seuils de ressources.
         with tempfile.TemporaryDirectory() as folder:  # Isole le fichier de verrouillage.
