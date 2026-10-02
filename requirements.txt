@@ -1,0 +1,7 @@
+# Installer PyTorch séparément suivant le matériel ; voir README.md.
+torch>=2.6,<3
+numpy>=1.26,<3
+tokenizers>=0.21,<1
+# Nécessaires pour la lecture progressive des partitions Wikipédia.
+huggingface-hub>=0.30,<2
+pyarrow>=21,<26
