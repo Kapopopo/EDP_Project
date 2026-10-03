@@ -39,7 +39,17 @@ Initialisée depuis `runs/pilot/best.pt`, corpus `data/legal/prepared/`.
 | refine2 6000 | 4,13 | 62 |
 | **refine3 8000** | **4,09** | **60** |
 
-Checkpoint final : **`runs/legal_refine3/best.pt`**
+Checkpoint petit modèle : `runs/legal_refine3/best.pt` (perte 4,09)
+
+### Modèle medium (4,2 M paramètres) — plus rapide vers ~3
+
+| Step | Perte val | Perplexité |
+|------|-----------|------------|
+| 4500 | 3,95 | 52 |
+| 8000 | **3,77** | **43** |
+| refine 5000 | **3,69** | **40** |
+
+Checkpoint final : **`runs/legal_medium_refine/best.pt`**
 
 ### Comparaison sur validation juridique
 
