@@ -74,6 +74,6 @@ if __name__ == "__main__":  # Expose python -m llm_fr.chat.
     parser.add_argument("--temperature", type=float, default=0.8)  # Règle la diversité des tokens.
     parser.add_argument("--top-k", type=int, default=40)  # Limite le nombre de candidats par position.
     args = parser.parse_args()  # Lit les options demandées.
-    candidates = ("runs/long/last.pt", "runs/expanded/last.pt", "runs/pilot/last.pt")  # Classe les phases de la plus récente à la plus ancienne.
+    candidates = ("runs/legal_medium_refine2/best.pt", "runs/legal_medium_refine/best.pt", "runs/legal_medium/best.pt", "runs/legal_refine3/best.pt", "runs/long/last.pt", "runs/expanded/last.pt", "runs/pilot/last.pt")  # Préfère le meilleur modèle juridique disponible.
     checkpoint_path = args.checkpoint or next((p for p in candidates if Path(p).is_file()), candidates[-1])  # Suit automatiquement la session longue dès qu'elle possède une sauvegarde.
     chat(checkpoint_path, args.count, args.temperature, args.top_k)  # Ouvre le terminal interactif.

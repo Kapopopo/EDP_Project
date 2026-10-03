@@ -47,25 +47,26 @@ Checkpoint petit modèle : `runs/legal_refine3/best.pt` (perte 4,09)
 |------|-----------|------------|
 | 4500 | 3,95 | 52 |
 | 8000 | **3,77** | **43** |
-| refine 5000 | **3,69** | **40** |
+| refine 5000 | 3,68 | 40 |
+| refine2 6000 | **3,64** | **38** |
 
-Checkpoint final : **`runs/legal_medium_refine/best.pt`**
+Checkpoint final : **`runs/legal_medium_refine2/best.pt`** (4,2 M paramètres)
 
 ### Comparaison sur validation juridique
 
-| Modèle | Perte val | Perplexité |
-|--------|-----------|------------|
-| Pilote (`runs/pilot/best.pt`) | 5,19 | 179 |
-| Juridique v1 (`runs/legal/best.pt`) | 4,25 | 70 |
-| **Juridique final (`runs/legal_refine3/best.pt`)** | **4,09** | **60** |
+| Modèle | Paramètres | Perte val | Perplexité |
+|--------|------------|-----------|------------|
+| Pilote | 1,3 M | 5,19 | 179 |
+| Petit juridique (`legal_refine3`) | 1,3 M | 4,09 | 60 |
+| **Medium juridique (`legal_medium_refine2`)** | **4,2 M** | **3,64** | **38** |
 
-Amélioration totale depuis le pilote : **−1,10** de perte (−21 %), perplexité **179 → 60**.
+Amélioration totale depuis le pilote : perte **5,19 → 3,64**, perplexité **179 → 38**.
 
 ## Interprétation
 
 - **Avant** (perte ~8) : quasi au hasard sur 4 096 tokens.
-- **Maintenant** (perte **4,09**) : objectif ~4,0 atteint pour un petit modèle (1,3 M paramètres).
-- **Cible réaliste** sur Mac : perte 4–5, perplexité 50–150.
+- **Petit modèle** (1,3 M) : perte ~4,0 — plafond atteint.
+- **Medium** (4,2 M) : perte **3,64** — proche de l'objectif ~3,0 ; sous 3,5 nécessiterait un modèle plus grand ou plus de données.
 - **Zéro** : impossible et non souhaitable (surapprentissage).
 
 Les textes générés restent incohérents : la perte mesure la prédiction statistique, pas la qualité juridique. Pour un usage cabinet, il faudra RAG + relecture avocat.
@@ -73,13 +74,16 @@ Les textes générés restent incohérents : la perte mesure la prédiction stat
 ## Reprendre l'entraînement
 
 ```bash
-# Reprendre depuis le meilleur modèle
+# Reprendre le medium (meilleur modèle actuel)
 .venv/bin/python -m llm_fr.train \
-  --config runs/legal_refine3/config.json \
+  --config runs/legal_medium_refine/config.json \
   --data data/legal/prepared \
-  --output runs/legal_refine3 --resume --stop-after 2000
+  --output runs/legal_medium_refine --resume --stop-after 2000
 
 # Tester une génération
-.venv/bin/python -m llm_fr.generate runs/legal_refine3/best.pt \
+.venv/bin/python -m llm_fr.generate runs/legal_medium_refine2/best.pt \
   "Le secret professionnel de l'avocat impose" --count 80
+
+# Chat interactif (sélectionne automatiquement le meilleur checkpoint juridique)
+.venv/bin/python -m llm_fr.chat
 ```
