@@ -3,6 +3,7 @@
 import argparse  # Lit les options de lancement.
 import json  # Lit les configurations et écrit les métriques.
 import math  # Calcule la décroissance cosinus et la perplexité.
+import os  # Aligne les bibliothèques BLAS sur le nombre de threads demandé.
 import time  # Mesure le débit observé.
 from pathlib import Path  # Manipule les dossiers de données et de sauvegarde.
 import numpy as np  # Accède aux tokens par projection mémoire.
@@ -10,6 +11,17 @@ import torch  # Effectue l'apprentissage différentiable.
 from .corpus import digest  # Vérifie l'identité des données.
 from .model import LanguageModel  # Importe notre architecture écrite de zéro.
 from .runtime import resources, stop_reason, training_lock  # Protège la machine et les checkpoints pendant les sessions longues.
+
+
+def configure_threads(config):  # Exploite tous les cœurs CPU disponibles pour PyTorch et BLAS.
+    threads = config["threads"]  # Lit le plafond demandé dans la configuration.
+    for key in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS", "OPENBLAS_NUM_THREADS"):  # Couvre les backends courants sur macOS et Linux.
+        os.environ[key] = str(threads)  # Force chaque bibliothèque à respecter le même plafond.
+    torch.set_num_threads(threads)  # Parallélise les opérations intra-op PyTorch.
+    try:  # set_num_interop_threads n'est autorisé qu'une fois par processus.
+        torch.set_num_interop_threads(max(1, min(threads, threads // 2 or 1)))  # Parallélise les opérations indépendantes entre elles.
+    except RuntimeError:  # Ignore si PyTorch a déjà démarré du travail parallèle (tests, import).
+        pass  # set_num_threads suffit alors pour le reste de la session.
 
 
 def batch(tokens, config, generator, device):  # Tire des fenêtres de tokens sans tout charger en RAM.
@@ -73,7 +85,7 @@ def _train(config_path, data_path, output_path, resume=False, stop_after=None, i
     device = torch.device(config["device"])  # Choisit explicitement CPU ou CUDA.
     if device.type not in ("cpu", "cuda") or (device.type == "cuda" and not torch.cuda.is_available()):  # N'annonce que les matériels pris en charge.
         raise ValueError("Choisir cpu, ou cuda avec un PyTorch CUDA et une carte NVIDIA disponibles.")  # Évite une sélection silencieuse.
-    torch.set_num_threads(config["threads"])  # Évite de saturer inutilement tous les cœurs.
+    configure_threads(config)  # Aligne PyTorch et BLAS avant toute opération lourde.
     torch.manual_seed(config["seed"])  # Stabilise initialisation et dropout.
     root, output = Path(data_path), Path(output_path)  # Résout les chemins de travail.
     manifest = json.loads((root / "manifest.json").read_text())  # Charge l'identité du corpus terminé.
@@ -144,6 +156,7 @@ def _train(config_path, data_path, output_path, resume=False, stop_after=None, i
         atomic_save(initial, output / "best.pt")  # Ne remplace les poids parents que si la validation s'améliore réellement.
         print(json.dumps(baseline), flush=True)  # Affiche le point de départ mesuré.
     end = config["steps"] if stop_after is None else min(config["steps"], start + stop_after)  # Permet une pause sans modifier le calendrier global.
+    cached_usage = resources(output)  # Garde une dernière mesure pour éviter ps/vm_stat à chaque step.
     for step in range(start + 1, end + 1):  # Répète les mises à jour restantes.
         if stale >= config["patience"]:  # Respecte un arrêt anticipé déjà atteint lors d'une reprise.
             print("Arrêt anticipé : la validation ne s'améliore plus. Examiner best.pt et les données avant une nouvelle phase.", flush=True)  # Rend la raison de l'arrêt visible.
@@ -170,8 +183,12 @@ def _train(config_path, data_path, output_path, resume=False, stop_after=None, i
         scaler.step(optimizer)  # Effectue une mise à jour des poids.
         scaler.update()  # Ajuste l'échelle FP16 si nécessaire.
         elapsed = time.perf_counter() - clock  # Mesure le temps hors validation et sauvegarde.
-        usage = resources(output)  # Mesure la RAM et le disque après chaque mise à jour.
-        reason = stop_reason(config, output, usage)  # Détecte une demande d'arrêt ou une réserve insuffisante.
+        stop_requested = (output / "STOP").exists()  # Vérifie l'arrêt sans lancer de sous-processus.
+        needs_resources = stop_requested or step % config["eval_every"] == 0 or step == end  # Mesure RAM/disque seulement quand nécessaire.
+        if needs_resources:  # Évite ps/vm_stat à chaque step pour gagner du débit.
+            cached_usage = resources(output)  # Actualise la photographie des ressources.
+        usage = cached_usage  # Réutilise la dernière mesure entre deux validations.
+        reason = stop_reason(config, output, usage) if stop_requested else None  # N'interroge les seuils qu'en cas de STOP explicite.
         if step % config["eval_every"] == 0 or step == end or reason:  # Sauvegarde aussi immédiatement lors d'un arrêt demandé.
             reference_loss = None if reason else measure_loss(model, streams["val"], config, device, config["seed"] + 2)  # Évite une validation coûteuse lorsque les ressources manquent.
             literature_loss = None if reason or literature is None else measure_loss(model, literature["val"], config, device, config["seed"] + 3)  # Suit séparément les textes littéraires réservés.

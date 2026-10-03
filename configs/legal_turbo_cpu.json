@@ -9,11 +9,11 @@
   "dropout": 0.1,
   "batch_size": 8,
   "accumulation": 4,
-  "steps": 6000,
-  "warmup": 50,
-  "learning_rate": 0.00003,
+  "steps": 8000,
+  "warmup": 100,
+  "learning_rate": 0.0002,
   "weight_decay": 0.1,
   "eval_every": 250,
   "eval_batches": 16,
-  "patience": 16
+  "patience": 15
 }

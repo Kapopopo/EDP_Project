@@ -38,7 +38,7 @@ def stream_reply(model, tokenizer, prompt, count, temperature, top_k):  # Produi
 def chat(checkpoint_path, count=100, temperature=0.8, top_k=40):  # Lance une session interactive persistante.
     if count < 1 or top_k < 1 or not math.isfinite(temperature) or temperature <= 0:  # Refuse les paramètres de génération invalides.
         raise ValueError("count et top-k doivent être positifs ; température finie et strictement positive.")  # Explique la correction.
-    torch.set_num_threads(2)  # Limite la concurrence CPU avec un entraînement en cours.
+    torch.set_num_threads(4)  # Laisse de la marge CPU si un entraînement tourne en parallèle.
     path = Path(checkpoint_path)  # Conserve le chemin du checkpoint à actualiser.
     print(f"Sauvegarde suivie : {path}", flush=True)  # Indique quelle phase fournit les réponses.
     print("Modèle local — /quitter pour sortir. Chaque message est indépendant.", flush=True)  # Présente les commandes et l'absence de mémoire de dialogue.
@@ -74,6 +74,6 @@ if __name__ == "__main__":  # Expose python -m llm_fr.chat.
     parser.add_argument("--temperature", type=float, default=0.8)  # Règle la diversité des tokens.
     parser.add_argument("--top-k", type=int, default=40)  # Limite le nombre de candidats par position.
     args = parser.parse_args()  # Lit les options demandées.
-    candidates = ("runs/legal_medium_refine2/best.pt", "runs/legal_medium_refine/best.pt", "runs/legal_medium/best.pt", "runs/legal_refine3/best.pt", "runs/long/last.pt", "runs/expanded/last.pt", "runs/pilot/last.pt")  # Préfère le meilleur modèle juridique disponible.
+    candidates = ("runs/legal_large_turbo/best.pt", "runs/legal_large/best.pt", "runs/legal_medium_refine2/best.pt", "runs/legal_medium_refine/best.pt", "runs/legal_medium/best.pt", "runs/legal_refine3/best.pt", "runs/long/last.pt", "runs/expanded/last.pt", "runs/pilot/last.pt")  # Préfère le meilleur modèle juridique disponible.
     checkpoint_path = args.checkpoint or next((p for p in candidates if Path(p).is_file()), candidates[-1])  # Suit automatiquement la session longue dès qu'elle possède une sauvegarde.
     chat(checkpoint_path, args.count, args.temperature, args.top_k)  # Ouvre le terminal interactif.
