@@ -33,23 +33,28 @@ Initialisée depuis `runs/pilot/best.pt`, corpus `data/legal/prepared/`.
 | 0 | 5,24 | 188 |
 | 2000 | 4,73 | 114 |
 | 4000 | 4,48 | 88 |
-| 6250 | **4,34** | **77** |
+| 6250 | 4,34 | 77 |
+| 10000 | 4,25 | 70 |
+| refine 4000 | 4,18 | 65 |
+| refine2 6000 | 4,13 | 62 |
+| **refine3 8000** | **4,09** | **60** |
 
-Checkpoint : `runs/legal/best.pt`
+Checkpoint final : **`runs/legal_refine3/best.pt`**
 
 ### Comparaison sur validation juridique
 
 | Modèle | Perte val | Perplexité |
 |--------|-----------|------------|
 | Pilote (`runs/pilot/best.pt`) | 5,19 | 179 |
-| Juridique (`runs/legal/best.pt`) | **4,34** | **77** |
+| Juridique v1 (`runs/legal/best.pt`) | 4,25 | 70 |
+| **Juridique final (`runs/legal_refine3/best.pt`)** | **4,09** | **60** |
 
-Amélioration : **−0,85** de perte (−16 %), perplexité divisée par ~2,3.
+Amélioration totale depuis le pilote : **−1,10** de perte (−21 %), perplexité **179 → 60**.
 
 ## Interprétation
 
 - **Avant** (perte ~8) : quasi au hasard sur 4 096 tokens.
-- **Maintenant** (perte **4,34**) : niveau **correct** pour un petit modèle (1,3 M paramètres).
+- **Maintenant** (perte **4,09**) : objectif ~4,0 atteint pour un petit modèle (1,3 M paramètres).
 - **Cible réaliste** sur Mac : perte 4–5, perplexité 50–150.
 - **Zéro** : impossible et non souhaitable (surapprentissage).
 
@@ -58,13 +63,13 @@ Les textes générés restent incohérents : la perte mesure la prédiction stat
 ## Reprendre l'entraînement
 
 ```bash
-# Continuer la phase juridique
+# Reprendre depuis le meilleur modèle
 .venv/bin/python -m llm_fr.train \
-  --config runs/legal/config.json \
+  --config runs/legal_refine3/config.json \
   --data data/legal/prepared \
-  --output runs/legal --resume --stop-after 2000
+  --output runs/legal_refine3 --resume --stop-after 2000
 
 # Tester une génération
-.venv/bin/python -m llm_fr.generate runs/legal/best.pt \
+.venv/bin/python -m llm_fr.generate runs/legal_refine3/best.pt \
   "Le secret professionnel de l'avocat impose" --count 80
 ```
