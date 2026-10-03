@@ -3,6 +3,8 @@
 Date de rédaction : 3 octobre 2026  
 Objectif : valider les hypothèses du projet IA juridique locale avant le MVP.
 
+**Statut T1 :** guide d'entretien et grilles prêts. Les comptes rendus ci-dessous restent à compléter après **2 entretiens réels** (avocat seul + associé).
+
 ## Cibles prévues
 
 | Profil | Nb | Focus |
