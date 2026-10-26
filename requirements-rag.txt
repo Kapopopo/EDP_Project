@@ -1,0 +1,3 @@
+# Dépendances optionnelles pour la recherche sémantique hybride (corpus métier curé).
+# PyTorch : installer séparément selon le matériel (voir README).
+sentence-transformers>=3.0,<4

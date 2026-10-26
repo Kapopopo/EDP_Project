@@ -87,3 +87,23 @@ Les textes générés restent incohérents : la perte mesure la prédiction stat
 # Chat interactif (sélectionne automatiquement le meilleur checkpoint juridique)
 .venv/bin/python -m llm_fr.chat
 ```
+
+### Modèle large MPS (12 M paramètres, corpus 25k)
+
+| Phase | Step | Perte val | Perplexité |
+|-------|------|-----------|------------|
+| ram22 CPU | 1000 | 2,999 | 20,1 |
+| mps refine | 6000 | 2,942 | 18,9 |
+| **mps refine2** | **4000** | **2,931** | **18,7** |
+
+Checkpoint : `runs/legal_large_25k_mps_refine2/best.pt`
+
+### Modèle XXL adaptatif (52 M paramètres, corpus 214k) — en cours
+
+| Phase | Step | Perte val | Perplexité |
+|-------|------|-----------|------------|
+| adaptive | 12000 | **2,926** | 18,6 |
+| refine | 3000 / 8000 | **2,888** | 18,0 |
+| refine2 | — | — | 5 000 steps à venir |
+
+Checkpoint visé : `runs/legal_xxl_adaptive_refine2/best.pt`

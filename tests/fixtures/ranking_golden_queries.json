@@ -1,0 +1,65 @@
+[
+  {
+    "id": "avocat_jurisprudence",
+    "query": "jurisprudence responsabilité avocat",
+    "expect_profession": "avocat",
+    "expect_intents": ["jurisprudence_strong"],
+    "prefer_source": "judilibre",
+    "avoid_domains": ["health", "defense"]
+  },
+  {
+    "id": "cassation_avocat",
+    "query": "arrêt Cour de cassation responsabilité professionnelle avocat",
+    "expect_profession": "avocat",
+    "expect_intents": ["jurisprudence_strong"],
+    "prefer_source": "judilibre"
+  },
+  {
+    "id": "deontologie_avocat",
+    "query": "obligations déontologiques avocat conflit d'intérêts",
+    "expect_profession": "avocat",
+    "expect_intents": ["professional_rules"],
+    "prefer_topic": "professional_rules_avocat",
+    "judilibre_should_not_dominate": true
+  },
+  {
+    "id": "mentions_legales_avocat",
+    "query": "mentions légales site internet avocat",
+    "expect_profession": "avocat",
+    "expect_intents": ["professional_rules"],
+    "judilibre_should_not_dominate": true
+  },
+  {
+    "id": "secret_medical_pertinent",
+    "query": "secret médical médecin obligations déontologiques",
+    "expect_profession": "medecin",
+    "active_domains": ["health"],
+    "avoid_penalizing_health": true
+  },
+  {
+    "id": "defense_pertinent",
+    "query": "obligations liées au secret de la défense nationale",
+    "active_domains": ["defense"],
+    "avoid_penalizing_defense": true
+  },
+  {
+    "id": "secret_professionnel_avocat",
+    "query": "secret professionnel avocat",
+    "expect_profession": "avocat",
+    "prefer_any_of": ["judilibre", "professional_rules_avocat"]
+  },
+  {
+    "id": "multi_domaine",
+    "query": "avocat soumis au secret défense jurisprudence cassation",
+    "expect_profession": "avocat",
+    "expect_intents": ["jurisprudence_strong"],
+    "active_domains": ["defense"],
+    "prefer_source": "judilibre"
+  },
+  {
+    "id": "general_obligations",
+    "query": "obligations professionnelles",
+    "expect_profession": null,
+    "expect_intents": ["professional_rules"]
+  }
+]

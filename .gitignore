@@ -6,3 +6,6 @@ runs/
 data/cache/
 data/migration_archive/
 data/migration_report.json
+
+data/
+logs/

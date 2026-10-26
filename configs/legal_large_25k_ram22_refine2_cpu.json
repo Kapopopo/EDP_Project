@@ -1,0 +1,22 @@
+{
+  "seed": 42,
+  "device": "cpu",
+  "threads": 10,
+  "context": 128,
+  "width": 384,
+  "heads": 6,
+  "layers": 6,
+  "dropout": 0.1,
+  "batch_size": 1024,
+  "accumulation": 1,
+  "steps": 6000,
+  "warmup": 60,
+  "learning_rate": 0.000011,
+  "weight_decay": 0.05,
+  "eval_every": 250,
+  "eval_batches": 8,
+  "patience": 15,
+  "max_rss_mb": 30000,
+  "min_available_mb": 6000,
+  "min_disk_mb": 400
+}

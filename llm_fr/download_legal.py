@@ -26,8 +26,9 @@ def download(output, limit, revision, min_score=1, max_mb=400):  # Collecte des 
     if limit <= 0 or max_mb <= 0:  # Refuse des limites invalides.
         raise ValueError("--limit et --max-mb doivent être positifs.")  # Explique l'erreur de paramètre.
     path = Path(output)  # Définit le fichier de sortie.
-    if path.exists():  # Protège un corpus déjà collecté.
-        raise FileExistsError(path)  # Demande un autre chemin.
+    if path.exists() and sum(1 for _ in path.open(encoding="utf-8")) >= limit:  # Ignore un corpus déjà complet.
+        print(f"Corpus déjà complet : {path} ({limit} documents).")  # Évite une collecte inutile.
+        return  # Termine sans erreur.
     path.parent.mkdir(parents=True, exist_ok=True)  # Crée le dossier juridique.
     temporary = path.with_suffix(path.suffix + ".part")  # Marque les collectes incomplètes.
     repository = "wikimedia/wikipedia"  # Réutilise la source déjà validée par le projet.
@@ -36,9 +37,10 @@ def download(output, limit, revision, min_score=1, max_mb=400):  # Collecte des 
     if not files:  # Refuse une révision sans données françaises.
         raise ValueError("Aucun fichier Parquet français dans cette révision.")  # Évite un corpus vide.
     filesystem = HfFileSystem()  # Ouvre la lecture distante par blocs.
-    kept = 0  # Compte les documents retenus.
-    scanned = 0  # Compte les articles examinés.
-    with temporary.open("x", encoding="utf-8") as stream:  # Refuse d'écraser une collecte partielle.
+    kept = sum(1 for _ in temporary.open(encoding="utf-8")) if temporary.exists() else 0  # Reprend une collecte interrompue.
+    scanned = kept  # Approxime le nombre d'articles déjà examinés.
+    mode = "a" if temporary.exists() else "x"  # Ajoute à un fichier partiel ou crée un nouveau flux.
+    with temporary.open(mode, encoding="utf-8") as stream:  # Reprend ou démarre la collecte.
         for name in files:  # Parcourt les partitions disponibles.
             with filesystem.open(f"datasets/{repository}@{info.sha}/{name}", "rb") as remote:  # Ouvre la partition distante.
                 with pq.ParquetFile(remote, pre_buffer=False) as parquet:  # Désactive la prélecture asynchrone.

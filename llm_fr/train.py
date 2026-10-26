@@ -82,9 +82,19 @@ def _train(config_path, data_path, output_path, resume=False, stop_after=None, i
         raise ValueError("Taux positif, weight_decay positif ou nul et warmup inférieur à steps requis.")  # Guide la correction.
     if stop_after is not None and stop_after <= 0:  # Vérifie la durée d'une session courte.
         raise ValueError("--stop-after doit être positif.")  # Refuse une session vide.
-    device = torch.device(config["device"])  # Choisit explicitement CPU ou CUDA.
-    if device.type not in ("cpu", "cuda") or (device.type == "cuda" and not torch.cuda.is_available()):  # N'annonce que les matériels pris en charge.
-        raise ValueError("Choisir cpu, ou cuda avec un PyTorch CUDA et une carte NVIDIA disponibles.")  # Évite une sélection silencieuse.
+    device_name = config["device"]  # Lit le matériel demandé dans la configuration.
+    if device_name == "mps":  # Active le GPU Apple Silicon lorsque PyTorch le propose.
+        if not torch.backends.mps.is_available():  # Vérifie la disponibilité réelle du backend MPS.
+            raise ValueError("MPS demandé mais indisponible sur cette machine.")  # Évite un repli silencieux sur CPU.
+        device = torch.device("mps")  # Utilise le GPU intégré des Mac Apple Silicon.
+    elif device_name == "cuda":  # Conserve le chemin NVIDIA historique.
+        if not torch.cuda.is_available():  # Refuse CUDA sans carte compatible.
+            raise ValueError("CUDA demandé mais aucune carte NVIDIA disponible.")  # Évite une session CPU déguisée.
+        device = torch.device("cuda")  # Utilise le GPU NVIDIA.
+    elif device_name == "cpu":  # Garde le mode CPU explicite.
+        device = torch.device("cpu")  # Entraîne uniquement sur processeur.
+    else:  # Rejette les valeurs inconnues.
+        raise ValueError("Choisir device : cpu, cuda ou mps.")  # Documente les choix supportés.
     configure_threads(config)  # Aligne PyTorch et BLAS avant toute opération lourde.
     torch.manual_seed(config["seed"])  # Stabilise initialisation et dropout.
     root, output = Path(data_path), Path(output_path)  # Résout les chemins de travail.
@@ -183,6 +193,7 @@ def _train(config_path, data_path, output_path, resume=False, stop_after=None, i
         scaler.step(optimizer)  # Effectue une mise à jour des poids.
         scaler.update()  # Ajuste l'échelle FP16 si nécessaire.
         elapsed = time.perf_counter() - clock  # Mesure le temps hors validation et sauvegarde.
+        (output / "progress.json").write_text(json.dumps(dict(step=step, train_loss=train_loss, tokens_per_second=tokens_per_step / elapsed)))  # Affiche l'avancement entre deux validations.
         stop_requested = (output / "STOP").exists()  # Vérifie l'arrêt sans lancer de sous-processus.
         needs_resources = stop_requested or step % config["eval_every"] == 0 or step == end  # Mesure RAM/disque seulement quand nécessaire.
         if needs_resources:  # Évite ps/vm_stat à chaque step pour gagner du débit.

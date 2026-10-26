@@ -1,0 +1,22 @@
+{
+  "seed": 42,
+  "context": 256,
+  "width": 640,
+  "heads": 10,
+  "layers": 10,
+  "dropout": 0.1,
+  "device": "mps",
+  "threads": 10,
+  "batch_size": 24,
+  "accumulation": 2,
+  "eval_batches": 4,
+  "max_rss_mb": 55705,
+  "min_available_mb": 5242,
+  "min_disk_mb": 400,
+  "steps": 12000,
+  "warmup": 200,
+  "learning_rate": 8e-05,
+  "eval_every": 250,
+  "patience": 25,
+  "weight_decay": 0.08
+}

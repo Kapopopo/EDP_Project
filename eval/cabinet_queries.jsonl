@@ -1,0 +1,10 @@
+{"id": "rin_barreau", "query": "règlement intérieur national avocat barreau obligations", "expect_profession": "avocat", "expect_intents": ["professional_rules"], "prefer_any_of": ["cabinet_curated", "avocat_organique"]}
+{"id": "mentions_site", "query": "mentions légales site internet avocat", "expect_profession": "avocat", "expect_intents": ["professional_rules"], "prefer_any_of": ["cabinet_curated", "avocat_organique"]}
+{"id": "publicite_avocat", "query": "publicité avocat décret 91-1197 loyauté dignité", "expect_profession": "avocat", "prefer_any_of": ["avocat_organique", "legifrance"]}
+{"id": "honoraires_convention", "query": "convention honoraires avocat information client", "expect_profession": "avocat", "prefer_any_of": ["cabinet_curated", "avocat_organique"]}
+{"id": "resp_avocat_juri", "query": "jurisprudence responsabilité civile avocat faute art 1147", "expect_profession": "avocat", "expect_intents": ["jurisprudence_strong"], "prefer_source": "judilibre"}
+{"id": "secret_pro_avocat", "query": "secret professionnel avocat", "expect_profession": "avocat", "prefer_any_of": ["judilibre", "cabinet_curated", "avocat_organique"]}
+{"id": "notaire_deonto_2023", "query": "obligations déontologiques notaire décret 2023", "expect_profession": "notaire", "prefer_any_of": ["notaire_deontologie_2023", "legifrance"]}
+{"id": "conflit_interets_avocat", "query": "obligations déontologiques avocat conflit d'intérêts", "expect_profession": "avocat", "expect_intents": ["professional_rules"], "judilibre_should_not_dominate": true}
+{"id": "cassation_avocat", "query": "arrêt Cour de cassation responsabilité professionnelle avocat", "expect_profession": "avocat", "expect_intents": ["jurisprudence_strong"], "prefer_source": "judilibre"}
+{"id": "decret_organique", "query": "décret 91-1197 avocat organisation barreau", "expect_profession": "avocat", "prefer_any_of": ["avocat_organique", "legifrance"]}

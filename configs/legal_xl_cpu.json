@@ -1,0 +1,19 @@
+{
+  "seed": 42,
+  "device": "cpu",
+  "threads": 10,
+  "context": 128,
+  "width": 512,
+  "heads": 8,
+  "layers": 8,
+  "dropout": 0.1,
+  "batch_size": 4,
+  "accumulation": 8,
+  "steps": 15000,
+  "warmup": 300,
+  "learning_rate": 0.00012,
+  "weight_decay": 0.1,
+  "eval_every": 500,
+  "eval_batches": 16,
+  "patience": 20
+}
