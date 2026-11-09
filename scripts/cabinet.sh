@@ -25,7 +25,8 @@ Exemples :
 
 Variables utiles (.env) :
   RAG_AUDIT_LOG=logs/rag_audit.jsonl   journal des questions
-  OPENAI_API_KEY / RAG_LLM_API_KEY     pour ./scripts/rag.sh --rediger
+  RAG_OLLAMA_MODEL=flint:40b-a2b-qat-int4  modèle Ollama pour ./scripts/rag.sh --rediger (défaut : local)
+  OPENAI_API_KEY / RAG_LLM_API_KEY     seulement avec --rediger --backend api (extraits envoyés à l'API)
 EOF
 }
 
