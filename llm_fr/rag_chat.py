@@ -166,7 +166,12 @@ def synthese_reply(
     local_tokenizer=None,
     domain_filter=None,
 ):  # Produit une synthèse sans charger le modèle (rédaction IA optionnelle).
-    from .llm_redact import append_redaction_to_synthesis, llm_api_key, redact_answer, redact_via_local
+    from .llm_redact import (
+        append_redaction_to_synthesis,
+        redact_answer,
+        redact_via_local,
+        redaction_unavailable_hint,
+    )
     from .synthesis_config import (
         DEFAULT_FALLBACK_CHARS,
         DEFAULT_MAX_SENTENCES,
@@ -212,11 +217,9 @@ def synthese_reply(
             strict_citations=strict_citations,
         )
         if redacted:
-            text = append_redaction_to_synthesis(text, redacted, redaction_backend or "api")
+            text = append_redaction_to_synthesis(text, redacted, redaction_backend)
         elif redact_backend != "off":
-            hint = "OPENAI_API_KEY ou RAG_LLM_API_KEY" if not llm_api_key() else "API injoignable"
-            if local_model is None:
-                hint += " ; ou checkpoint local (runs/…/best.pt)"
+            hint = redaction_unavailable_hint(redact_backend, has_local_model=local_model is not None)
             text += f"\n\n(Rédaction IA non disponible : {hint}.)"
     return dict(
         sources=hits,
@@ -276,7 +279,7 @@ def synthese_chat(
     show_diagnostics=True,
     audit=True,
 ):  # Lance une session interactive sans génération.
-    from .llm_redact import llm_api_key
+    from .llm_redact import llm_api_base, llm_api_key, normalize_backend, ollama_available, ollama_base_url, ollama_model
     from .retrieval_diagnostics import format_retrieval_diagnostics
     from .synthesis_audit import append_audit_record
     from .synthesis_config import DEFAULT_FALLBACK_CHARS, DEFAULT_MAX_SENTENCES, DEFAULT_TOP_K
@@ -289,15 +292,27 @@ def synthese_chat(
     index = RagIndex.load(index_dir)  # Charge l'index documentaire.
     local_model = local_tokenizer = None
     if redact:
-        use_local = redact_backend in ("local", "auto") and (redact_backend == "local" or not llm_api_key())
+        redact_backend = normalize_backend(redact_backend)
+        ollama_up = redact_backend in ("auto", "ollama") and ollama_available()
+        # Le checkpoint local n'est chargé que s'il est demandé, ou en secours quand Ollama ne répond pas.
+        use_local = redact_backend == "local" or (redact_backend == "auto" and not ollama_up)
         ckpt = resolve_checkpoint_path(checkpoint_path) if use_local else None
         if ckpt:
             print(f"Rédaction : modèle local {ckpt}", flush=True)
             local_model, local_tokenizer, _, _ = load_model(ckpt)
-        elif llm_api_key():
-            print(f"Rédaction : API ({redact_backend})", flush=True)
+        elif redact_backend in ("auto", "ollama"):
+            print(f"Rédaction : Ollama local ({ollama_model()} sur {ollama_base_url()})", flush=True)
+            if not ollama_up:
+                print("Attention : Ollama ne répond pas (lancer `ollama serve`, vérifier `ollama list`).", flush=True)
+        elif redact_backend == "api":
+            print(
+                f"Rédaction : API distante {llm_api_base()} (--backend api) — les extraits quittent la machine.",
+                flush=True,
+            )
+            if not llm_api_key():
+                print("Attention : OPENAI_API_KEY ou RAG_LLM_API_KEY attendue (voir .env.example).", flush=True)
         else:
-            print("Rédaction : API ou checkpoint local attendu (voir .env.example).", flush=True)
+            print("Rédaction : checkpoint local attendu (runs/…/best.pt).", flush=True)
     print(f"Index : {index_dir} ({index.n_docs} fragments)", flush=True)  # Indique la taille de l'index.
     if index.semantic is not None:  # Recherche hybride activée.
         print(f"Hybride : TF-IDF + sémantique métier ({len(index.semantic.meta)} fragments curés)", flush=True)  # Indique le sous-index.
@@ -402,13 +417,17 @@ if __name__ == "__main__":  # Expose python -m llm_fr.rag_chat.
     parser.add_argument(
         "--rediger",
         action="store_true",
-        help="Ajoute un mémo rédigé (API OpenAI-compatible ou checkpoint local) après les extraits.",
+        help="Ajoute un mémo rédigé après les extraits (modèle local via Ollama par défaut).",
     )
     parser.add_argument(
         "--backend",
-        choices=("auto", "api", "local"),
+        choices=("auto", "ollama", "local", "api"),
         default="auto",
-        help="Moteur de rédaction pour --rediger (défaut : auto).",
+        help=(
+            "Moteur de rédaction pour --rediger. auto (défaut) : Ollama local puis checkpoint local, "
+            "jamais d'API distante ; ollama ; local (checkpoint) ; "
+            "api : API OpenAI-compatible distante, les extraits quittent la machine."
+        ),
     )
     parser.add_argument(
         "--strict-citations",

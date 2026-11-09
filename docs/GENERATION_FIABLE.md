@@ -10,7 +10,12 @@ Avec `python -m llm_fr.rag_chat --rediger --strict-citations` :
 - Le prompt système impose **une affirmation par puce**, suivie de `[S1]` ou `[S1][S2]`.
 - Sans `--rediger`, le flag n’a pas d’effet (synthèse extractive inchangée).
 
-Variables d’environnement : `OPENAI_API_KEY` ou `RAG_LLM_API_KEY`, optionnellement `RAG_LLM_BASE_URL` et `RAG_LLM_MODEL`.
+Moteur de rédaction (`--backend`) :
+
+- `auto` (défaut) : modèle local via **Ollama**, puis checkpoint local (`runs/…/best.pt`) si Ollama ne répond pas. **Aucune API distante n’est appelée**, même si une clé est définie.
+- `ollama` : Ollama seul. Variables : `RAG_OLLAMA_MODEL` (nom affiché par `ollama list`), `RAG_OLLAMA_BASE_URL` (défaut `http://localhost:11434/v1`).
+- `local` : checkpoint local seul.
+- `api` : API compatible OpenAI **distante**, uniquement sur demande explicite (`--backend api`). Les extraits quittent la machine. Variables : `OPENAI_API_KEY` ou `RAG_LLM_API_KEY`, optionnellement `RAG_LLM_BASE_URL` et `RAG_LLM_MODEL`.
 
 ## Construire un dataset SFT depuis le RAG
 
